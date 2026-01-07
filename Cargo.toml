@@ -1,0 +1,70 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/titan-core",
+    "crates/titan-ring",
+    "crates/titan-proto",
+    "crates/titan-net",
+    "crates/titan-feed",
+    "crates/titan-replay",
+    "crates/titan-metrics",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+authors = ["Titan Team"]
+
+[workspace.dependencies]
+# === Benchmarking ===
+criterion = { version = "0.5", features = ["html_reports"] }
+
+# === CPU/System ===
+core_affinity = "0.8"
+raw-cpuid = "11"
+libc = "0.2"
+
+# === Data Structures ===
+bitflags = "2"
+arrayvec = "0.7"
+tinyvec = "1"
+
+# === Serialization (Zero-Copy) ===
+bytemuck = { version = "1", features = ["derive"] }
+zerocopy = "0.7"
+
+# === Time (NO SystemTime) ===
+quanta = "0.12"
+coarsetime = "0.1"
+
+# === Metrics ===
+hdrhistogram = "7"
+
+# === Networking ===
+mio = { version = "0.8", features = ["net", "os-poll"] }
+socket2 = "0.5"
+
+# === Testing ===
+proptest = "1"
+
+# === Internal Crates ===
+titan-core = { path = "crates/titan-core" }
+titan-ring = { path = "crates/titan-ring" }
+titan-proto = { path = "crates/titan-proto" }
+titan-net = { path = "crates/titan-net" }
+titan-feed = { path = "crates/titan-feed" }
+titan-replay = { path = "crates/titan-replay" }
+titan-metrics = { path = "crates/titan-metrics" }
+
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1
+panic = "abort"
+debug = true                    # Keep symbols for profiling
+overflow-checks = false
+debug-assertions = false
+
+[profile.bench]
+inherits = "release"

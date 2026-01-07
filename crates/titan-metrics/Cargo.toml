@@ -1,0 +1,9 @@
+[package]
+name = "titan-metrics"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+hdrhistogram = { workspace = true }
+quanta = { workspace = true }

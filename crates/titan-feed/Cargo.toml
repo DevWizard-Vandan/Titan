@@ -1,0 +1,10 @@
+[package]
+name = "titan-feed"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+titan-proto = { workspace = true }
+socket2 = { workspace = true }
+bytemuck = { workspace = true }

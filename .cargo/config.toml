@@ -1,0 +1,23 @@
+[build]
+rustflags = [
+    "-C", "target-cpu=native",           # Use all CPU features (AVX-512, etc.)
+    "-C", "opt-level=3",                 # Maximum optimization
+]
+
+[target.x86_64-pc-windows-msvc]
+rustflags = [
+    "-C", "target-cpu=native",
+    "-C", "opt-level=3",
+]
+
+[target.x86_64-unknown-linux-gnu]
+rustflags = [
+    "-C", "target-cpu=native",
+    "-C", "opt-level=3",
+    "-C", "link-arg=-Wl,--as-needed",    # Linux: remove unused deps
+]
+
+# Alias for running benchmarks
+[alias]
+bench-core = "bench -p titan-core"
+bench-ring = "bench -p titan-ring"

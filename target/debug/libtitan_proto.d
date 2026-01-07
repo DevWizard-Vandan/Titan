@@ -1,0 +1,1 @@
+C:\Users\VANDAN\Projects\Titan\target\debug\libtitan_proto.rlib: C:\Users\VANDAN\Projects\Titan\crates\titan-proto\src\lib.rs C:\Users\VANDAN\Projects\Titan\crates\titan-proto\src\messages.rs C:\Users\VANDAN\Projects\Titan\crates\titan-proto\src\parser.rs
