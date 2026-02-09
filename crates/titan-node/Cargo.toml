@@ -1,0 +1,20 @@
+[package]
+name = "titan-node"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[[bin]]
+name = "titan-node"
+path = "src/main.rs"
+
+[dependencies]
+titan-core = { workspace = true }
+titan-net = { workspace = true }
+titan-metrics = { workspace = true }
+prometheus = { workspace = true }
+tiny_http = { workspace = true }
+lazy_static = { workspace = true }
+crossbeam-channel = { workspace = true }
+core_affinity = { workspace = true }
+quanta = { workspace = true }

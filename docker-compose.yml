@@ -1,0 +1,80 @@
+version: '3.8'
+
+services:
+  # ============ Titan Matching Engine ============
+  titan:
+    build: .
+    container_name: titan-engine
+    ports:
+      - "8080:8080"  # TCP Gateway
+      - "9090:9090"  # Prometheus Metrics
+    volumes:
+      - titan-data:/data
+    ulimits:
+      memlock: -1    # Allow memory locking for performance
+      nofile:
+        soft: 65536
+        hard: 65536
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 4G
+        reservations:
+          cpus: '1'
+          memory: 1G
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9090/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    networks:
+      - titan-network
+
+  # ============ Prometheus ============
+  prometheus:
+    image: prom/prometheus:v2.45.0
+    container_name: titan-prometheus
+    volumes:
+      - ./config/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    ports:
+      - "9091:9090"
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=15d'
+      - '--web.enable-lifecycle'
+    networks:
+      - titan-network
+    depends_on:
+      - titan
+
+  # ============ Grafana ============
+  grafana:
+    image: grafana/grafana:10.0.0
+    container_name: titan-grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=titan_admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./config/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./config/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    networks:
+      - titan-network
+    depends_on:
+      - prometheus
+
+volumes:
+  titan-data:
+  prometheus-data:
+  grafana-data:
+
+networks:
+  titan-network:
+    driver: bridge

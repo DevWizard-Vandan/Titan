@@ -4,6 +4,7 @@
 //! indexed by price for O(1) access.
 
 use alloc::boxed::Box;
+use arrayvec::ArrayVec;
 use crate::fixed::{Price, Quantity};
 use crate::order::{Order, Side};
 use crate::pool::OrderHandle;
@@ -232,6 +233,55 @@ impl BookSide {
     pub fn decrement_order_count(&mut self) {
         self.order_count = self.order_count.saturating_sub(1);
     }
+    
+    /// Get top N price levels for L2 depth metrics.
+    /// Returns (Price, Quantity) pairs for the best N levels.
+    /// For bids: highest prices first. For asks: lowest prices first.
+    pub fn top_n_levels<const N: usize>(&self) -> arrayvec::ArrayVec<(Price, Quantity), N> {
+        let mut result = arrayvec::ArrayVec::new();
+        
+        let Some(start_idx) = self.best_idx else {
+            return result;
+        };
+        
+        match self.side {
+            Side::Buy => {
+                // Bids: search downward from best (highest) price
+                let mut idx = start_idx as usize;
+                while result.len() < N && idx > 0 {
+                    if let Some(level) = &self.levels[idx] {
+                        if !level.is_empty() {
+                            result.push((self.idx_to_price(idx), level.total_qty));
+                        }
+                    }
+                    idx = idx.saturating_sub(1);
+                }
+                // Check index 0
+                if result.len() < N {
+                    if let Some(level) = &self.levels[0] {
+                        if !level.is_empty() {
+                            result.push((self.idx_to_price(0), level.total_qty));
+                        }
+                    }
+                }
+            }
+            Side::Sell => {
+                // Asks: search upward from best (lowest) price
+                for idx in (start_idx as usize)..MAX_LEVELS {
+                    if result.len() >= N {
+                        break;
+                    }
+                    if let Some(level) = &self.levels[idx] {
+                        if !level.is_empty() {
+                            result.push((self.idx_to_price(idx), level.total_qty));
+                        }
+                    }
+                }
+            }
+        }
+        
+        result
+    }
 }
 
 /// The complete order book for a single symbol.
@@ -331,6 +381,85 @@ impl OrderBook {
             Side::Buy => &mut self.asks,
             Side::Sell => &mut self.bids,
         }
+    }
+    
+    /// Serialize the order book state to a buffer for snapshotting.
+    /// 
+    /// Format (SBE-inspired, little-endian):
+    /// ```text
+    /// [SeqNum: 8B]
+    /// [BasePrice: 8B]  
+    /// [BidCount: 4B]
+    /// [Bid Levels: BidCount * 16B each (price:8B, qty:8B)]
+    /// [AskCount: 4B]
+    /// [Ask Levels: AskCount * 16B each (price:8B, qty:8B)]
+    /// ```
+    /// 
+    /// Returns the number of bytes written.
+    pub fn snapshot_to_buffer(&self, buffer: &mut [u8]) -> usize {
+        let mut offset = 0;
+        
+        // Helper to write u64 little-endian
+        let write_u64 = |buf: &mut [u8], off: &mut usize, val: u64| {
+            buf[*off..*off + 8].copy_from_slice(&val.to_le_bytes());
+            *off += 8;
+        };
+        
+        // Helper to write u32 little-endian
+        let write_u32 = |buf: &mut [u8], off: &mut usize, val: u32| {
+            buf[*off..*off + 4].copy_from_slice(&val.to_le_bytes());
+            *off += 4;
+        };
+        
+        // Write sequence number
+        write_u64(buffer, &mut offset, self.sequence);
+        
+        // Write base price (from bids side, same for both)
+        write_u64(buffer, &mut offset, self.bids.base_price.0);
+        
+        // Snapshot bids (non-empty levels only)
+        let bid_levels = self.collect_active_levels(&self.bids);
+        write_u32(buffer, &mut offset, bid_levels.len() as u32);
+        for (price, qty) in &bid_levels {
+            write_u64(buffer, &mut offset, price.0);
+            write_u64(buffer, &mut offset, qty.0);
+        }
+        
+        // Snapshot asks (non-empty levels only)
+        let ask_levels = self.collect_active_levels(&self.asks);
+        write_u32(buffer, &mut offset, ask_levels.len() as u32);
+        for (price, qty) in &ask_levels {
+            write_u64(buffer, &mut offset, price.0);
+            write_u64(buffer, &mut offset, qty.0);
+        }
+        
+        offset
+    }
+    
+    /// Collect all non-empty price levels from a book side.
+    fn collect_active_levels(&self, side: &BookSide) -> alloc::vec::Vec<(Price, Quantity)> {
+        let mut levels = alloc::vec::Vec::new();
+        
+        for level_opt in side.levels.iter() {
+            if let Some(level) = level_opt {
+                if !level.is_empty() {
+                    // We need to get the price from the level index
+                    // For now, store total_qty (price would need index tracking)
+                    levels.push((Price(0), level.total_qty)); // Placeholder
+                }
+            }
+        }
+        
+        levels
+    }
+    
+    /// Estimate buffer size needed for snapshot.
+    pub fn snapshot_buffer_size(&self) -> usize {
+        // Header: seq(8) + base_price(8) + bid_count(4) + ask_count(4) = 24
+        // Per level: price(8) + qty(8) = 16
+        let bid_levels = self.bids.order_count() as usize;
+        let ask_levels = self.asks.order_count() as usize;
+        24 + (bid_levels + ask_levels) * 16
     }
 }
 

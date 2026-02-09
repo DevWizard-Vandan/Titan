@@ -3,11 +3,24 @@
 //! This is THE hot path. Every nanosecond matters here.
 //! The matching algorithm implements price-time priority.
 
+use core::sync::atomic::{AtomicU64, Ordering};
 use arrayvec::ArrayVec;
 use crate::fixed::{Price, Quantity};
 use crate::order::{Order, OrderId, Side, OrderType, SymbolId};
 use crate::pool::{OrderPool, OrderHandle};
 use crate::book::OrderBook;
+
+// === HOT-PATH METRICS (Atomic, lock-free) ===
+// These are read by the metrics thread every 1s. Cost: ~5-10ns per increment.
+
+/// Total orders processed (submitted to engine).
+pub static ORDERS_PROCESSED: AtomicU64 = AtomicU64::new(0);
+
+/// Total fills executed.
+pub static FILLS_EXECUTED: AtomicU64 = AtomicU64::new(0);
+
+/// Total orders rejected.
+pub static ORDERS_REJECTED: AtomicU64 = AtomicU64::new(0);
 
 /// Maximum fills per order (limits stack usage).
 pub const MAX_FILLS_PER_ORDER: usize = 64;
@@ -109,12 +122,17 @@ impl MatchingEngine {
     /// This is THE hot path - every nanosecond matters.
     #[inline]
     pub fn submit_order(&mut self, mut order: Order, timestamp: u64) -> OrderResult {
+        // === METRICS: Track order submission ===
+        ORDERS_PROCESSED.fetch_add(1, Ordering::Relaxed);
+        
         // === VALIDATION (minimal, fast-fail) ===
         if order.remaining_qty.is_zero() {
+            ORDERS_REJECTED.fetch_add(1, Ordering::Relaxed);
             return OrderResult::Rejected { reason: RejectReason::InvalidQuantity };
         }
         
         if order.price.is_zero() && order.order_type != OrderType::IOC {
+            ORDERS_REJECTED.fetch_add(1, Ordering::Relaxed);
             return OrderResult::Rejected { reason: RejectReason::InvalidPrice };
         }
         
@@ -125,6 +143,7 @@ impl MatchingEngine {
         if order.order_type == OrderType::PostOnly {
             let opposite_side = self.book.opposite_side_mut(order.side);
             if opposite_side.would_match(order.price, order.side) {
+                ORDERS_REJECTED.fetch_add(1, Ordering::Relaxed);
                 return OrderResult::Rejected { reason: RejectReason::PostOnlyWouldMatch };
             }
         }
@@ -132,6 +151,7 @@ impl MatchingEngine {
         // === FOK PRE-CHECK ===
         if order.order_type == OrderType::FOK {
             if !self.can_fill_completely(&order) {
+                ORDERS_REJECTED.fetch_add(1, Ordering::Relaxed);
                 return OrderResult::Rejected { reason: RejectReason::InsufficientLiquidity };
             }
         }
@@ -315,6 +335,9 @@ impl MatchingEngine {
         }
         
         opposite_book.reduce_qty(fill_qty);
+        
+        // === METRICS: Track fill execution ===
+        FILLS_EXECUTED.fetch_add(1, Ordering::Relaxed);
         
         Some(fill)
     }

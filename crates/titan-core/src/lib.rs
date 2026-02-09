@@ -26,3 +26,6 @@ pub use pool::{OrderPool, OrderHandle};
 pub use level::PriceLevel;
 pub use book::{OrderBook, BookSide};
 pub use engine::{Fill, OrderResult, RejectReason, MatchingEngine};
+
+// Re-export atomic metrics for external observability
+pub use engine::{ORDERS_PROCESSED, FILLS_EXECUTED, ORDERS_REJECTED};

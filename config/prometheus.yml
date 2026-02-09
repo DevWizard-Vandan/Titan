@@ -1,0 +1,27 @@
+# Prometheus Configuration for Titan
+global:
+  scrape_interval: 1s
+  evaluation_interval: 1s
+
+# Alertmanager configuration (optional)
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: []
+
+# Rule files (optional)
+rule_files: []
+
+# Scrape configurations
+scrape_configs:
+  # Titan Matching Engine
+  - job_name: 'titan'
+    static_configs:
+      - targets: ['titan:9090']
+    scrape_interval: 1s
+    metrics_path: /metrics
+
+  # Prometheus self-monitoring
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']

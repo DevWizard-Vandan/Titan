@@ -8,6 +8,7 @@ members = [
     "crates/titan-feed",
     "crates/titan-replay",
     "crates/titan-metrics",
+    "crates/titan-node",
 ]
 
 [workspace.package]
@@ -40,6 +41,20 @@ coarsetime = "0.1"
 
 # === Metrics ===
 hdrhistogram = "7"
+prometheus = "0.13"
+
+# === HTTP Server (Lightweight) ===
+tiny_http = "0.12"
+
+# === Concurrency ===
+lazy_static = "1.4"
+crossbeam-channel = "0.5"
+
+# === CLI ===
+clap = { version = "4", features = ["derive"] }
+
+# === CSV Parsing ===
+csv = "1.3"
 
 # === Networking ===
 mio = { version = "0.8", features = ["net", "os-poll"] }
@@ -56,6 +71,7 @@ titan-net = { path = "crates/titan-net" }
 titan-feed = { path = "crates/titan-feed" }
 titan-replay = { path = "crates/titan-replay" }
 titan-metrics = { path = "crates/titan-metrics" }
+titan-node = { path = "crates/titan-node" }
 
 [profile.release]
 opt-level = 3
