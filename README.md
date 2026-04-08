@@ -12,6 +12,7 @@
 ### ⚡ Ultra Low-Latency Matching Engine
 
 ## 🌐 [Live Demo → devwizard-vandan.github.io/Titan](https://devwizard-vandan.github.io/Titan)
+## 🔗 [Part of the HFT Stack → devwizard-vandan.github.io/HFT-Stack](https://devwizard-vandan.github.io/HFT-Stack/)
 
 [![Demo](https://img.shields.io/badge/demo-live-brightgreen)](https://devwizard-vandan.github.io/Titan)
 
