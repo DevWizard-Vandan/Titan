@@ -326,56 +326,9 @@
       <h2>Real Numbers. Measured with RDTSC.</h2>
       <p>HdrHistogram latency tracking · Release build · Native hardware</p>
     </div>
-    <div class="fade-up" style="overflow-x:auto">
-      <table class="bench-table">
-        <thead>
-          <tr>
-            <th>Operation</th>
-            <th>Throughput</th>
-            <th>P50</th>
-            <th>P99</th>
-            <th>vs Target</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td><span class="op-name">Insert</span></td>
-            <td><span class="throughput">12,646,542 /sec</span></td>
-            <td><span class="p50">0 ns</span></td>
-            <td><span class="p99">200 ns</span></td>
-            <td>
-              <div class="bar-wrap">
-                <div class="bar-bg"><div class="bar-fill" style="width:0%" data-width="100%"></div></div>
-                <span style="font-size:11px;color:var(--color-green);white-space:nowrap">12.6× target</span>
-              </div>
-            </td>
-          </tr>
-          <tr>
-            <td><span class="op-name">Match</span></td>
-            <td><span class="throughput">12,825,775 /sec</span></td>
-            <td><span class="p50">0 ns</span></td>
-            <td><span class="p99">100 ns</span></td>
-            <td>
-              <div class="bar-wrap">
-                <div class="bar-bg"><div class="bar-fill" style="width:0%" data-width="100%"></div></div>
-                <span style="font-size:11px;color:var(--color-green);white-space:nowrap">12.8× target</span>
-              </div>
-            </td>
-          </tr>
-          <tr>
-            <td><span class="op-name">Mixed Workload</span></td>
-            <td><span class="throughput">227,188 /sec</span></td>
-            <td><span class="p50">100 ns</span></td>
-            <td><span class="p99">200 μs</span></td>
-            <td>
-              <div class="bar-wrap">
-                <div class="bar-bg"><div class="bar-fill" style="width:0%" data-width="22%"></div></div>
-                <span style="font-size:11px;color:var(--color-accent);white-space:nowrap">Real-world</span>
-              </div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+    <div class="fade-up">
+      <iframe src="titan-orderbook.html" width="100%" height="700px"
+        style="border:none;border-radius:12px;" loading="lazy"></iframe>
     </div>
     <div class="kpi-grid">
       <div class="kpi-card yellow fade-up">
