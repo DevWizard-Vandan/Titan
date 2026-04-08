@@ -11,6 +11,10 @@
 
 ### ⚡ Ultra Low-Latency Matching Engine
 
+## 🌐 [Live Demo → devwizard-vandan.github.io/Titan](https://devwizard-vandan.github.io/Titan)
+
+[![Demo](https://img.shields.io/badge/demo-live-brightgreen)](https://devwizard-vandan.github.io/Titan)
+
 [![Rust](https://img.shields.io/badge/rust-nightly-orange.svg)](https://www.rust-lang.org/)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Tests](https://img.shields.io/badge/tests-33%20passing-brightgreen.svg)]()
